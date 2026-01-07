@@ -23,6 +23,8 @@ export async function GET(request) {
       );
     }
     
+    console.log('📊 Balance request for:', profileId || phone);
+    
     const { client, db } = await connectToDatabase();
     const users = db.collection('users');
     
@@ -34,7 +36,7 @@ export async function GET(request) {
     const user = await users.findOne(query);
     
     if (!user) {
-      await client.close();
+      // DON'T CLOSE CLIENT
       return NextResponse.json(
         { success: false, error: 'User not found' },
         { status: 404 }
@@ -71,7 +73,10 @@ export async function GET(request) {
       .limit(10)
       .toArray();
     
-    await client.close();
+    // DON'T CLOSE CLIENT - Let connection pooling handle it
+    // await client.close(); // ❌ This was causing the error!
+    
+    console.log('✅ Balance response:', { stored: storedBalance, calculated: calculatedBalance });
     
     return NextResponse.json({
       success: true,
@@ -102,7 +107,7 @@ export async function GET(request) {
     });
     
   } catch (error) {
-    console.error('Get balance error:', error);
+    console.error('❌ Get balance error:', error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
@@ -130,6 +135,8 @@ export async function POST(request) {
       );
     }
     
+    console.log('💰 Balance update request:', { profile_id, balance });
+    
     const { client, db } = await connectToDatabase();
     const users = db.collection('users');
     
@@ -148,7 +155,10 @@ export async function POST(request) {
     // Reconcile
     const reconciliation = await reconcileBalance(db, profile_id);
     
-    await client.close();
+    // DON'T CLOSE CLIENT
+    // await client.close(); // ❌ This was causing the error!
+    
+    console.log('✅ Balance updated successfully');
     
     return NextResponse.json({
       success: true,
@@ -160,7 +170,7 @@ export async function POST(request) {
     });
     
   } catch (error) {
-    console.error('Update balance error:', error);
+    console.error('❌ Update balance error:', error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

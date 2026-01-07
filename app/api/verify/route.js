@@ -14,6 +14,8 @@ export async function GET(request) {
       );
     }
     
+    console.log('🔍 Verify endpoint called');
+    
     const { client, db } = await connectToDatabase();
     const users = db.collection('users');
     const transactions = db.collection('transactions');
@@ -34,7 +36,10 @@ export async function GET(request) {
     const failedSyncs = await db.collection('pending_sync')
       .countDocuments({ retry_count: { $gte: 3 } });
     
-    await client.close();
+    // DON'T CLOSE CLIENT - Let connection pooling handle it
+    // await client.close(); // ❌ This was causing the error!
+    
+    console.log('✅ Verify endpoint successful');
     
     return NextResponse.json({
       success: true,
@@ -64,7 +69,7 @@ export async function GET(request) {
     });
     
   } catch (error) {
-    console.error('Verify error:', error);
+    console.error('❌ Verify error:', error);
     return NextResponse.json(
       { 
         success: false, 

@@ -14,6 +14,8 @@ export async function POST(request) {
     }
     
     const data = await request.json();
+    console.log('📥 User sync request:', data);
+    
     const { client, db } = await connectToDatabase();
     
     const users = db.collection('users');
@@ -33,7 +35,7 @@ export async function POST(request) {
       
       // Add device if not already associated
       if (data.device_id && !existingUser.device_ids?.includes(data.device_id)) {
-        updateData.$push = { device_ids: data.device_id };
+        updateData.device_ids = [...(existingUser.device_ids || []), data.device_id];
         updateData.last_device = data.device_id;
       }
       
@@ -42,9 +44,11 @@ export async function POST(request) {
         { $set: updateData }
       );
       
+      console.log('✅ User updated:', profileId);
+      
     } else {
       // Create new user
-      await users.insertOne({
+      const newUser = {
         profile_id: profileId,
         name: data.name,
         phone: data.phone,
@@ -56,13 +60,17 @@ export async function POST(request) {
         sync_count: 1,
         created_at: new Date(),
         updated_at: new Date()
-      });
+      };
+      
+      await users.insertOne(newUser);
+      console.log('✅ New user created:', profileId);
     }
     
     // Get updated user
     const user = await users.findOne({ profile_id: profileId });
     
-    await client.close();
+    // DON'T CLOSE CLIENT - Let connection pooling handle it
+    // await client.close(); // ❌ This was causing the error!
     
     return NextResponse.json({
       success: true,
@@ -76,7 +84,7 @@ export async function POST(request) {
     });
     
   } catch (error) {
-    console.error('User sync error:', error);
+    console.error('❌ User sync error:', error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
@@ -114,7 +122,8 @@ export async function GET(request) {
     
     const user = await users.findOne(query);
     
-    await client.close();
+    // DON'T CLOSE CLIENT
+    // await client.close(); // ❌ This was causing the error!
     
     if (!user) {
       return NextResponse.json(
@@ -135,7 +144,7 @@ export async function GET(request) {
     });
     
   } catch (error) {
-    console.error('Get user error:', error);
+    console.error('❌ Get user error:', error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

@@ -14,6 +14,7 @@ export async function POST(request) {
     }
     
     const data = await request.json();
+    console.log('📝 Transaction sync request:', data);
     
     // Validate transaction data
     const validation = validateTransaction(data);
@@ -31,7 +32,7 @@ export async function POST(request) {
     // Check if transaction already exists
     const existingTx = await transactions.findOne({ tx_id: data.tx_id });
     if (existingTx) {
-      await client.close();
+      // DON'T CLOSE CLIENT
       return NextResponse.json({
         success: true,
         message: 'Transaction already synced',
@@ -122,7 +123,10 @@ export async function POST(request) {
       }
     }
     
-    await client.close();
+    // DON'T CLOSE CLIENT - Let connection pooling handle it
+    // await client.close(); // ❌ This was causing the error!
+    
+    console.log('✅ Transaction synced:', data.tx_id);
     
     return NextResponse.json({
       success: true,
@@ -182,7 +186,8 @@ export async function GET(request) {
       .limit(limit)
       .toArray();
     
-    await client.close();
+    // DON'T CLOSE CLIENT
+    // await client.close(); // ❌ This was causing the error!
     
     return NextResponse.json({
       success: true,
