@@ -43,7 +43,7 @@ export async function GET(request) {
     
     // Calculate true balance
     const calculatedBalance = await calculateTrueBalance(db, user.profile_id);
-    const storedBalance = user.balance || 0;
+    let storedBalance = user.balance || 0;
     const discrepancy = Math.abs(storedBalance - calculatedBalance);
     
     // Reconcile if needed
