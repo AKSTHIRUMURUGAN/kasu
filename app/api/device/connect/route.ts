@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { connectDB } from '@/lib/mongodb'
-import User, { KasuDevice } from '@/lib/models'
+import User, { KasuDevice, DeviceReassignmentRequest } from '@/lib/models'
 import { verifyToken, createErrorResponse } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
@@ -49,6 +49,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check if device is deactivated
+    if (device.status === 'deactivated') {
+      return NextResponse.json(
+        { success: false, message: 'This device has been deactivated. Please contact admin.' },
+        { status: 400 }
+      )
+    }
+
     // Check if device is already assigned to another user
     const existingAssignment = await User.findOne({ 
       'kasuDevice.macAddress': macAddress,
@@ -57,7 +65,12 @@ export async function POST(request: NextRequest) {
     
     if (existingAssignment) {
       return NextResponse.json(
-        { success: false, message: 'Device is already assigned to another user' },
+        { 
+          success: false, 
+          message: 'Device is already assigned to another user. Please contact admin to reassign.',
+          code: 'DEVICE_ALREADY_ASSIGNED',
+          canRequestReassignment: true
+        },
         { status: 400 }
       )
     }
@@ -65,12 +78,60 @@ export async function POST(request: NextRequest) {
     // Check if user already has a device assigned
     if (user.kasuDevice?.macAddress && user.kasuDevice.macAddress !== macAddress) {
       return NextResponse.json(
-        { success: false, message: 'User already has a device assigned. Please contact admin to reassign.' },
+        { 
+          success: false, 
+          message: 'You already have a device assigned. Please contact admin to reassign.',
+          code: 'USER_HAS_DEVICE',
+          currentDevice: user.kasuDevice.macAddress,
+          canRequestReassignment: true
+        },
         { status: 400 }
       )
     }
 
-    // Assign device to user
+    // Check if there's an approved reassignment request for this user and device
+    const approvedRequest = await DeviceReassignmentRequest.findOne({
+      userId: user._id,
+      requestedDeviceMac: macAddress,
+      status: 'approved'
+    })
+
+    // If user already has this device assigned or there's an approved request, proceed with assignment
+    if (user.kasuDevice?.macAddress === macAddress || approvedRequest) {
+      // Assign device to user
+      user.kasuDevice = {
+        macAddress,
+        assignedAt: new Date(),
+        status: 'assigned',
+        connectionStatus: 'unknown',
+        lastSeen: null
+      }
+      
+      // Update user status to active if verified
+      if (user.status === 'verified') {
+        user.status = 'active'
+      }
+
+      await user.save()
+
+      // Update device status
+      device.status = 'assigned'
+      device.phone = phone
+      await device.save()
+
+      return NextResponse.json({
+        success: true,
+        message: 'Device connected successfully',
+        device: {
+          macAddress: device.macAddress,
+          status: device.status,
+          assignedAt: user.kasuDevice.assignedAt
+        }
+      })
+    }
+
+    // If we reach here, it means the device is unassigned and user doesn't have a device
+    // Proceed with normal assignment
     user.kasuDevice = {
       macAddress,
       assignedAt: new Date(),

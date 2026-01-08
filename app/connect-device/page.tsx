@@ -30,6 +30,10 @@ export default function ConnectDevicePage() {
   const [connected, setConnected] = useState(false)
   const [userInfo, setUserInfo] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
+  const [showReassignRequest, setShowReassignRequest] = useState(false)
+  const [reassignReason, setReassignReason] = useState('')
+  const [canRequestReassignment, setCanRequestReassignment] = useState(false)
+  const [currentDevice, setCurrentDevice] = useState<string | null>(null)
 
   useEffect(() => {
     // Check if user is logged in
@@ -105,6 +109,13 @@ export default function ConnectDevicePage() {
           sendHeartbeat(scannedData.macAddress, userInfo.phone)
         }, 1000)
       } else {
+        // Check if this is a reassignment scenario
+        if (data.code === 'DEVICE_ALREADY_ASSIGNED' || data.code === 'USER_HAS_DEVICE') {
+          setCanRequestReassignment(data.canRequestReassignment || false)
+          if (data.currentDevice) {
+            setCurrentDevice(data.currentDevice)
+          }
+        }
         setError(data.message || 'Failed to connect device')
         toast.error(data.message || 'Failed to connect device')
       }
@@ -162,6 +173,43 @@ export default function ConnectDevicePage() {
     toast.success('MAC address entered successfully!')
   }
 
+  const handleReassignmentRequest = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!scannedData || !reassignReason.trim()) {
+      toast.error('Please provide a reason for reassignment')
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/device/reassign-request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          macAddress: scannedData.macAddress,
+          reason: reassignReason.trim()
+        })
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        toast.success('Reassignment request submitted successfully!')
+        setShowReassignRequest(false)
+        setReassignReason('')
+        setError('Request submitted. Admin will review and approve your device reassignment.')
+      } else {
+        toast.error(data.message || 'Failed to submit request')
+      }
+    } catch (error) {
+      toast.error('Failed to submit request. Please try again.')
+    }
+  }
+
   const resetScanner = () => {
     setScannedData(null)
     setConnected(false)
@@ -169,6 +217,10 @@ export default function ConnectDevicePage() {
     setIsScanning(false)
     setShowManualEntry(false)
     setManualMacAddress('')
+    setShowReassignRequest(false)
+    setReassignReason('')
+    setCanRequestReassignment(false)
+    setCurrentDevice(null)
   }
 
   if (!userInfo) {
@@ -347,6 +399,16 @@ export default function ConnectDevicePage() {
               {error && (
                 <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
                   {error}
+                  {canRequestReassignment && (
+                    <div className="mt-3">
+                      <button
+                        onClick={() => setShowReassignRequest(true)}
+                        className="text-sm bg-orange-600 text-white px-3 py-1 rounded hover:bg-orange-700"
+                      >
+                        Request Device Reassignment
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -399,6 +461,63 @@ export default function ConnectDevicePage() {
           </div>
         )}
       </div>
+
+      {/* Device Reassignment Request Modal */}
+      {showReassignRequest && scannedData && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Request Device Reassignment</h3>
+              
+              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                <p className="text-sm text-yellow-800">
+                  <strong>Device:</strong> {scannedData.macAddress}
+                </p>
+                {currentDevice && (
+                  <p className="text-sm text-yellow-800">
+                    <strong>Your current device:</strong> {currentDevice}
+                  </p>
+                )}
+                <p className="text-sm text-yellow-700 mt-2">
+                  This request will be reviewed by an admin. Please provide a clear reason for the reassignment.
+                </p>
+              </div>
+
+              <form onSubmit={handleReassignmentRequest}>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Reason for Reassignment *
+                  </label>
+                  <textarea
+                    value={reassignReason}
+                    onChange={(e) => setReassignReason(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    rows={4}
+                    placeholder="Please explain why you need this device reassigned (e.g., device malfunction, lost device, etc.)"
+                    required
+                  />
+                </div>
+                
+                <div className="flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowReassignRequest(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-md hover:bg-orange-700"
+                  >
+                    Submit Request
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

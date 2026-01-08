@@ -271,6 +271,12 @@ export default function AdminPage() {
               >
                 Manage Devices
               </Link>
+              <Link
+                href="/admin/reassignment-requests"
+                className="text-sm bg-orange-600 text-white px-3 py-1 rounded hover:bg-orange-700"
+              >
+                Reassignment Requests
+              </Link>
               <button
                 onClick={updateDeviceStatus}
                 className="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"

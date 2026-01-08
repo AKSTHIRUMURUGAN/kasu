@@ -13,7 +13,8 @@ import {
   TrashIcon,
   ArrowLeftIcon,
   ClipboardDocumentIcon,
-  ArrowDownTrayIcon
+  ArrowDownTrayIcon,
+  XCircleIcon
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 
@@ -25,7 +26,7 @@ interface Device {
     firmware?: string
     batteryLevel?: number
   }
-  status: 'unassigned' | 'assigned' | 'active' | 'inactive'
+  status: 'unassigned' | 'assigned' | 'active' | 'inactive' | 'deactivated'
   assignedUser?: {
     name: string
     phone: string
@@ -128,7 +129,7 @@ export default function DevicesPage() {
   }
 
   const handleDeleteDevice = async (deviceId: string) => {
-    if (!confirm('Are you sure you want to delete this device?')) return
+    if (!confirm('Are you sure you want to delete this device? This action cannot be undone.')) return
 
     try {
       const token = localStorage.getItem('token')
@@ -145,6 +146,35 @@ export default function DevicesPage() {
         fetchDevices()
       } else {
         toast.error(data.message || 'Failed to delete device')
+      }
+    } catch (error) {
+      toast.error('Something went wrong')
+    }
+  }
+
+  const handleDeactivateDevice = async (deviceId: string) => {
+    if (!confirm('Are you sure you want to deactivate this device? The user will lose access to it.')) return
+
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/admin/update-device-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          deviceId: deviceId,
+          status: 'deactivated'
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        toast.success('Device deactivated successfully')
+        fetchDevices()
+      } else {
+        toast.error(data.message || 'Failed to deactivate device')
       }
     } catch (error) {
       toast.error('Something went wrong')
@@ -198,6 +228,7 @@ export default function DevicesPage() {
       case 'assigned': return 'text-blue-600 bg-blue-100'
       case 'unassigned': return 'text-gray-600 bg-gray-100'
       case 'inactive': return 'text-red-600 bg-red-100'
+      case 'deactivated': return 'text-red-800 bg-red-200'
       default: return 'text-gray-600 bg-gray-100'
     }
   }
@@ -295,15 +326,27 @@ export default function DevicesPage() {
                     </button>
                   </div>
                   
-                  {device.status === 'unassigned' && (
-                    <button
-                      onClick={() => handleDeleteDevice(device._id)}
-                      className="text-red-600 hover:text-red-900"
-                      title="Delete Device"
-                    >
-                      <TrashIcon className="w-5 h-5" />
-                    </button>
-                  )}
+                  <div className="flex space-x-2">
+                    {device.status === 'assigned' && (
+                      <button
+                        onClick={() => handleDeactivateDevice(device._id)}
+                        className="text-orange-600 hover:text-orange-900"
+                        title="Deactivate Device"
+                      >
+                        <XCircleIcon className="w-5 h-5" />
+                      </button>
+                    )}
+                    
+                    {(device.status === 'unassigned' || device.status === 'deactivated') && (
+                      <button
+                        onClick={() => handleDeleteDevice(device._id)}
+                        className="text-red-600 hover:text-red-900"
+                        title="Delete Device"
+                      >
+                        <TrashIcon className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
