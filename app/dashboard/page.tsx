@@ -71,6 +71,10 @@ export default function DashboardPage() {
       router.push('/auth/login')
       return
     }
+    
+    // Initialize background services
+    initializeBackgroundServices()
+    
     fetchUserData()
     fetchTransactions()
     fetchDeviceStatus()
@@ -86,6 +90,18 @@ export default function DashboardPage() {
       clearInterval(transactionInterval)
     }
   }, [])
+
+  const initializeBackgroundServices = async () => {
+    try {
+      const response = await fetch('/api/system/init')
+      const data = await response.json()
+      if (data.success) {
+        console.log('✅ Background services initialized')
+      }
+    } catch (error) {
+      console.error('❌ Failed to initialize background services:', error)
+    }
+  }
 
   const fetchDeviceStatus = async () => {
     try {
@@ -428,7 +444,32 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Connection</span>
                   <div className="flex items-center">
-                    {user.kasuDevice.connectionStatus === 'online' ? (
+                    {deviceStatus?.isOnline ? (
+                      <>
+                        <div className={`w-2 h-2 rounded-full mr-2 ${
+                          deviceStatus.connectionQuality === 'excellent' ? 'bg-green-500 animate-pulse' :
+                          deviceStatus.connectionQuality === 'good' ? 'bg-green-400' :
+                          deviceStatus.connectionQuality === 'fair' ? 'bg-yellow-500' : 'bg-green-500'
+                        }`}></div>
+                        <span className={`text-sm ${
+                          deviceStatus.connectionQuality === 'excellent' ? 'text-green-600' :
+                          deviceStatus.connectionQuality === 'good' ? 'text-green-500' :
+                          deviceStatus.connectionQuality === 'fair' ? 'text-yellow-600' : 'text-green-600'
+                        }`}>
+                          Online
+                        </span>
+                        {deviceStatus.connectionQuality && (
+                          <span className="text-xs text-gray-500 ml-1">
+                            ({deviceStatus.connectionQuality})
+                          </span>
+                        )}
+                      </>
+                    ) : deviceStatus?.connectionStatus === 'offline' ? (
+                      <>
+                        <div className="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
+                        <span className="text-sm text-red-600">Offline</span>
+                      </>
+                    ) : user.kasuDevice.connectionStatus === 'online' ? (
                       <>
                         <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
                         <span className="text-sm text-green-600">Online</span>
@@ -454,12 +495,21 @@ export default function DashboardPage() {
                     </span>
                   </div>
                 )}
-                {user.kasuDevice.lastSeen && (
+                {(deviceStatus?.lastSeenFormatted || user.kasuDevice.lastSeen) && (
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Last Seen</span>
-                    <span className="text-xs text-gray-500" title={new Date(user.kasuDevice.lastSeen).toLocaleString()}>
-                      {getRelativeTime(user.kasuDevice.lastSeen)}
-                    </span>
+                    <div className="text-right">
+                      <span className="text-xs text-gray-700">
+                        {deviceStatus?.lastSeenFormatted || new Date(user.kasuDevice.lastSeen).toLocaleString()}
+                      </span>
+                      {deviceStatus?.timeSinceLastSeenMinutes !== null && (
+                        <div className="text-xs text-gray-500">
+                          {deviceStatus.timeSinceLastSeenMinutes === 0 ? 'Just now' : 
+                           deviceStatus.timeSinceLastSeenMinutes === 1 ? '1 minute ago' :
+                           `${deviceStatus.timeSinceLastSeenMinutes} minutes ago`}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
                 {user.kasuDevice.assignedAt && (
@@ -499,6 +549,21 @@ export default function DashboardPage() {
                     <span className="text-xs text-gray-500" title={new Date(lastSyncTime).toLocaleString()}>
                       {getRelativeTime(lastSyncTime)}
                     </span>
+                  </div>
+                )}
+                
+                {/* Connection Status Alert */}
+                {deviceStatus && !deviceStatus.isOnline && (
+                  <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-start">
+                      <ExclamationTriangleIcon className="w-4 h-4 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm text-yellow-800 font-medium">Device Offline</p>
+                        <p className="text-xs text-yellow-700 mt-1">
+                          Transactions will be stored locally and synced when connection is restored.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
                 <div className="pt-2 border-t border-gray-100">

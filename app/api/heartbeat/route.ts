@@ -49,14 +49,14 @@ export async function POST(request: NextRequest) {
     // Check if this is the first connection
     const firstConnection = user.kasuDevice?.connectionStatus !== 'online'
 
-    // Update user device status
+    // Update user device status - mark as online with current timestamp
     user.kasuDevice.connectionStatus = 'online'
     user.kasuDevice.lastSeen = new Date()
     if (user.kasuDevice.status === 'assigned') {
       user.kasuDevice.status = 'active'
     }
 
-    // Update device status
+    // Update device status in KasuDevice collection
     device.status = 'active'
     device.lastSync = new Date()
     if (localBalance !== undefined) {
@@ -65,6 +65,8 @@ export async function POST(request: NextRequest) {
     if (batteryLevel !== undefined) {
       device.deviceInfo.batteryLevel = batteryLevel
     }
+
+    console.log(`📶 Device marked online: ${macAddress} at ${user.kasuDevice.lastSeen.toISOString()}`)
 
     // Process local transactions if provided
     let syncedTransactions = 0
