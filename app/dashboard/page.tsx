@@ -113,7 +113,14 @@ export default function DashboardPage() {
       })
       const data = await response.json()
       if (data.success) {
-        setDeviceStatus(data.device)
+        // Ensure device object exists and has required properties
+        const deviceInfo = data.device || {}
+        setDeviceStatus({
+          ...deviceInfo,
+          timeSinceLastSeenMinutes: deviceInfo.timeSinceLastSeenMinutes || null,
+          connectionQuality: deviceInfo.connectionQuality || 'unknown',
+          isOnline: deviceInfo.isOnline || false
+        })
         setLastSyncTime(new Date().toISOString())
         // Update user device info if available
         if (data.userDeviceInfo && user) {
@@ -122,6 +129,13 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error('Error fetching device status:', error)
+      // Set safe default values on error
+      setDeviceStatus({
+        connectionStatus: 'unknown',
+        isOnline: false,
+        timeSinceLastSeenMinutes: null,
+        connectionQuality: 'unknown'
+      })
     }
   }
 
@@ -502,7 +516,7 @@ export default function DashboardPage() {
                       <span className="text-xs text-gray-700">
                         {deviceStatus?.lastSeenFormatted || new Date(user.kasuDevice.lastSeen).toLocaleString()}
                       </span>
-                      {deviceStatus?.timeSinceLastSeenMinutes !== null && (
+                      {deviceStatus?.timeSinceLastSeenMinutes !== null && deviceStatus?.timeSinceLastSeenMinutes !== undefined && (
                         <div className="text-xs text-gray-500">
                           {deviceStatus.timeSinceLastSeenMinutes === 0 ? 'Just now' : 
                            deviceStatus.timeSinceLastSeenMinutes === 1 ? '1 minute ago' :
