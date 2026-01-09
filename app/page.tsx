@@ -87,6 +87,7 @@ const testimonials = [
 
 export default function HomePage() {
   const [isVisible, setIsVisible] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     setIsVisible(true)
@@ -100,9 +101,11 @@ export default function HomePage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <h1 className="text-2xl font-bold text-gradient">KASU</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-gradient">KASU</h1>
               </div>
             </div>
+            
+            {/* Desktop Navigation */}
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
                 <a href="#revolution" className="text-gray-600 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors">
@@ -117,43 +120,88 @@ export default function HomePage() {
                 <a href="#testimonials" className="text-gray-600 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors">
                   Testimonials
                 </a>
-                <Link href="/auth/login" className="btn-secondary">
+                <Link href="/auth/login" className="btn-secondary text-sm">
                   Login
                 </Link>
-                <Link href="/auth/register" className="btn-primary">
+                <Link href="/auth/register" className="btn-primary text-sm">
                   Get Started
                 </Link>
               </div>
+            </div>
+
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              >
+                <span className="sr-only">Open main menu</span>
+                {mobileMenuOpen ? (
+                  <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                ) : (
+                  <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile menu */}
+        <div className={`md:hidden ${mobileMenuOpen ? 'block' : 'hidden'}`}>
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200">
+            <a href="#revolution" className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">
+              Revolution
+            </a>
+            <a href="#features" className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">
+              Features
+            </a>
+            <a href="#about" className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">
+              About
+            </a>
+            <a href="#testimonials" className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">
+              Testimonials
+            </a>
+            <div className="pt-4 pb-3 border-t border-gray-200">
+              <Link href="/auth/login" className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50">
+                Login
+              </Link>
+              <Link href="/auth/register" className="block px-3 py-2 rounded-md text-base font-medium bg-blue-600 text-white hover:bg-blue-700 mt-2">
+                Get Started
+              </Link>
             </div>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-16 pb-20 hero-gradient text-white overflow-hidden">
+      <section className="pt-16 pb-12 sm:pb-20 hero-gradient text-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[80vh]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center min-h-[70vh] sm:min-h-[80vh]">
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: isVisible ? 1 : 0, x: isVisible ? 0 : -50 }}
               transition={{ duration: 0.8 }}
               className="text-center lg:text-left"
             >
-              <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 sm:mb-6">
                 The Future of
                 <span className="block text-yellow-300">Digital Payments</span>
               </h1>
-              <p className="text-xl md:text-2xl mb-8 text-blue-100">
+              <p className="text-lg sm:text-xl md:text-2xl mb-6 sm:mb-8 text-blue-100">
                 Secure, offline-first payment system that works everywhere. 
                 Bringing financial inclusion to 900M+ rural Indians.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Link href="/auth/register" className="btn-primary bg-white text-primary-600 hover:bg-gray-100 text-lg px-8 py-3">
+                <Link href="/auth/register" className="btn-primary bg-white text-primary-600 hover:bg-gray-100 text-base sm:text-lg px-6 sm:px-8 py-3">
                   Start Your Journey
-                  <ArrowRightIcon className="w-5 h-5 ml-2 inline" />
+                  <ArrowRightIcon className="w-4 h-4 sm:w-5 sm:h-5 ml-2 inline" />
                 </Link>
-                <button className="btn-secondary bg-transparent border-2 border-white text-white hover:bg-white hover:text-primary-600 text-lg px-8 py-3">
-                  <PlayIcon className="w-5 h-5 mr-2 inline" />
+                <button className="btn-secondary bg-transparent border-2 border-white text-white hover:bg-white hover:text-primary-600 text-base sm:text-lg px-6 sm:px-8 py-3">
+                  <PlayIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2 inline" />
                   Watch Demo
                 </button>
               </div>
@@ -163,25 +211,25 @@ export default function HomePage() {
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: isVisible ? 1 : 0, x: isVisible ? 0 : 50 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative"
+              className="relative mt-8 lg:mt-0"
             >
               <div className="relative z-10">
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 sm:p-8 border border-white/20">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-blue-200">Balance</span>
-                      <span className="text-2xl font-bold">₹12,450</span>
+                      <span className="text-blue-200 text-sm sm:text-base">Balance</span>
+                      <span className="text-xl sm:text-2xl font-bold">₹12,450</span>
                     </div>
                     <div className="h-px bg-white/20"></div>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-blue-200">Last Transaction</span>
-                        <span className="text-green-300">+₹500</span>
+                        <span className="text-blue-200 text-sm sm:text-base">Last Transaction</span>
+                        <span className="text-green-300 text-sm sm:text-base">+₹500</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-blue-200">Status</span>
-                        <span className="text-green-300 flex items-center">
-                          <CheckCircleIcon className="w-4 h-4 mr-1" />
+                        <span className="text-blue-200 text-sm sm:text-base">Status</span>
+                        <span className="text-green-300 flex items-center text-sm sm:text-base">
+                          <CheckCircleIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                           Active
                         </span>
                       </div>
@@ -189,8 +237,8 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-              <div className="absolute -top-4 -right-4 w-72 h-72 bg-yellow-300/20 rounded-full blur-3xl animate-float"></div>
-              <div className="absolute -bottom-4 -left-4 w-72 h-72 bg-blue-300/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '3s' }}></div>
+              <div className="absolute -top-4 -right-4 w-48 h-48 sm:w-72 sm:h-72 bg-yellow-300/20 rounded-full blur-3xl animate-float"></div>
+              <div className="absolute -bottom-4 -left-4 w-48 h-48 sm:w-72 sm:h-72 bg-blue-300/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '3s' }}></div>
             </motion.div>
           </div>
         </div>

@@ -62,6 +62,15 @@
     animation: float 6s ease-in-out infinite;
   }
   
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+  
   .loading-spinner {
     @apply inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin;
   }
@@ -96,6 +105,61 @@
   
   .transaction-failed {
     @apply status-badge bg-red-100 text-red-800;
+  }
+  
+  /* Mobile-specific utilities */
+  .mobile-container {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+  
+  .mobile-card {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6;
+  }
+  
+  .mobile-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6;
+  }
+  
+  .mobile-text-lg {
+    @apply text-base sm:text-lg;
+  }
+  
+  .mobile-text-xl {
+    @apply text-lg sm:text-xl;
+  }
+  
+  .mobile-text-2xl {
+    @apply text-xl sm:text-2xl;
+  }
+  
+  .mobile-text-3xl {
+    @apply text-2xl sm:text-3xl;
+  }
+  
+  .mobile-button {
+    @apply px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base;
+  }
+  
+  .mobile-icon {
+    @apply w-4 h-4 sm:w-5 sm:h-5;
+  }
+  
+  .mobile-icon-lg {
+    @apply w-6 h-6 sm:w-8 sm:h-8;
+  }
+  
+  /* Touch-friendly tap targets */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  /* Safe area for mobile devices */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
 
