@@ -90,8 +90,9 @@ function ResetPasswordForm() {
         <Link href="/auth/login" className="flex justify-center mb-6">
           <ArrowLeftIcon className="w-6 h-6 text-gray-600 hover:text-gray-900" />
         </Link>
-        <Link href="/" className="flex justify-center">
-          <h1 className="text-3xl font-bold text-gradient">KASU</h1>
+        <Link href="/" className="flex flex-col items-center gap-3">
+          <img src="/logo.png" alt="KASU Logo" className="h-16 w-auto" />
+          <img src="/name.png" alt="KASU" className="h-8 w-auto" />
         </Link>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
           Reset your password

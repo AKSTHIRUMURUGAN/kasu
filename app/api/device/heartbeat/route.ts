@@ -51,9 +51,6 @@ export async function POST(request: NextRequest) {
     // Update device status
     device.status = 'active'
     device.lastSync = new Date()
-    if (localBalance !== undefined) {
-      device.localBalance = localBalance
-    }
     if (batteryLevel !== undefined) {
       device.deviceInfo.batteryLevel = batteryLevel
     }
@@ -137,6 +134,10 @@ export async function POST(request: NextRequest) {
         console.log(`💰 Updated user balance: ₹${updatedBalance/100} (synced ${syncedTransactions} transactions)`)
       }
     }
+
+    // Update device localBalance AFTER processing transactions to reflect the correct balance
+    device.localBalance = user.balance
+    console.log(`📱 Device localBalance updated to: ₹${user.balance/100}`)
 
     await user.save()
     await device.save()

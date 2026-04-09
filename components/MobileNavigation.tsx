@@ -57,10 +57,9 @@ export default function MobileNavigation({ user }: MobileNavigationProps) {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center">
-              <Link href={user ? "/dashboard" : "/"} className="flex-shrink-0">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  KASU
-                </h1>
+              <Link href={user ? "/dashboard" : "/"} className="flex-shrink-0 flex items-center gap-2">
+                <img src="/logo.png" alt="KASU Logo" className="h-8 w-auto" />
+                <img src="/name.png" alt="KASU" className="h-6 w-auto" />
               </Link>
             </div>
 

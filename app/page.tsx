@@ -101,7 +101,10 @@ export default function HomePage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <h1 className="text-xl sm:text-2xl font-bold text-gradient">KASU</h1>
+                <Link href="/" className="flex items-center gap-2">
+                  <img src="/logo.png" alt="KASU Logo" className="h-8 sm:h-10 w-auto" />
+                  <img src="/name.png" alt="KASU" className="h-6 sm:h-7 w-auto" />
+                </Link>
               </div>
             </div>
             
@@ -717,7 +720,10 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-2xl font-bold text-gradient mb-4">KASU</h3>
+              <div className="mb-4 flex items-center gap-2">
+                <img src="/logo.png" alt="KASU Logo" className="h-10 w-auto invert" />
+                <img src="/name.png" alt="KASU" className="h-7 w-auto invert" />
+              </div>
               <p className="text-gray-400">
                 Secure Universal Identity Payment System for everyone, everywhere.
               </p>

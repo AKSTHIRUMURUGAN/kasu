@@ -184,11 +184,12 @@ export default function ReassignmentRequestsPage() {
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Link href="/admin" className="mr-4">
+            <div className="flex items-center gap-2">
+              <Link href="/admin" className="mr-2">
                 <ArrowLeftIcon className="w-5 h-5 text-gray-600 hover:text-gray-900" />
               </Link>
-              <h1 className="text-2xl font-bold text-gradient">KASU</h1>
+              <img src="/logo.png" alt="KASU Logo" className="h-8 w-auto" />
+              <img src="/name.png" alt="KASU" className="h-6 w-auto" />
               <span className="ml-4 text-gray-600">Device Reassignment Requests</span>
             </div>
             <div className="flex items-center space-x-4">

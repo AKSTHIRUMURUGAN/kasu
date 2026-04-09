@@ -260,8 +260,9 @@ export default function AdminPage() {
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gradient">KASU</h1>
+            <div className="flex items-center gap-2">
+              <img src="/logo.png" alt="KASU Logo" className="h-8 w-auto" />
+              <img src="/name.png" alt="KASU" className="h-6 w-auto" />
               <span className="ml-4 text-gray-600">Admin Dashboard</span>
             </div>
             <div className="flex items-center space-x-4">

@@ -66,6 +66,7 @@ export default function DashboardPage() {
   const [addAmount, setAddAmount] = useState('')
   const [sendAmount, setSendAmount] = useState('')
   const [recipientPhone, setRecipientPhone] = useState('')
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -81,15 +82,19 @@ export default function DashboardPage() {
     fetchTransactions()
     fetchDeviceStatus()
 
-    // Set up periodic device status check (every 30 seconds)
-    const deviceStatusInterval = setInterval(fetchDeviceStatus, 30000)
+    // Set up periodic device status check (every 15 seconds for more responsive updates)
+    const deviceStatusInterval = setInterval(fetchDeviceStatus, 15000)
     
-    // Set up live transaction polling (every 10 seconds)
-    const transactionInterval = setInterval(fetchTransactions, 10000)
+    // Set up live transaction polling (every 5 seconds for near real-time updates)
+    const transactionInterval = setInterval(fetchTransactions, 5000)
+    
+    // Set up user data refresh (every 5 seconds to catch balance updates)
+    const userDataInterval = setInterval(fetchUserData, 5000)
     
     return () => {
       clearInterval(deviceStatusInterval)
       clearInterval(transactionInterval)
+      clearInterval(userDataInterval)
     }
   }, [])
 
@@ -138,6 +143,22 @@ export default function DashboardPage() {
         timeSinceLastSeenMinutes: null,
         connectionQuality: 'unknown'
       })
+    }
+  }
+
+  const refreshAllData = async () => {
+    setIsRefreshing(true)
+    try {
+      await Promise.all([
+        fetchUserData(),
+        fetchTransactions(),
+        fetchDeviceStatus()
+      ])
+      toast.success('Data refreshed')
+    } catch (error) {
+      toast.error('Failed to refresh data')
+    } finally {
+      setIsRefreshing(false)
     }
   }
 
@@ -394,6 +415,14 @@ export default function DashboardPage() {
                 <h3 className="text-base sm:text-lg font-medium text-gray-900">Device Status</h3>
                 <div className="flex items-center space-x-2">
                   <button
+                    onClick={refreshAllData}
+                    disabled={isRefreshing}
+                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                    title="Refresh all data"
+                  >
+                    <ArrowPathIcon className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  </button>
+                  <button
                     onClick={fetchDeviceStatus}
                     className="p-1 text-gray-400 hover:text-gray-600"
                     title="Refresh device status"
@@ -518,6 +547,14 @@ export default function DashboardPage() {
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex items-center justify-between">
             <h3 className="text-base sm:text-lg font-medium text-gray-900">Recent Transactions</h3>
             <div className="flex items-center space-x-3">
+              <button
+                onClick={refreshAllData}
+                disabled={isRefreshing}
+                className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                title="Refresh transactions"
+              >
+                <ArrowPathIcon className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
               <div className="flex items-center text-xs text-gray-500">
                 <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
                 <span className="hidden sm:inline">Live Updates</span>

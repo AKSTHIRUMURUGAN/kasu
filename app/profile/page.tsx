@@ -170,10 +170,13 @@ export default function ProfilePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Link href="/dashboard" className="mr-4">
+              <Link href="/dashboard" className="mr-2">
                 <ArrowLeftIcon className="w-6 h-6 text-gray-600 hover:text-gray-900" />
               </Link>
-              <h1 className="text-2xl font-bold text-gradient">KASU</h1>
+              <div className="flex items-center gap-2">
+                <img src="/logo.png" alt="KASU Logo" className="h-8 w-auto" />
+                <img src="/name.png" alt="KASU" className="h-6 w-auto" />
+              </div>
               <span className="ml-4 text-gray-600">Profile</span>
             </div>
             <button
