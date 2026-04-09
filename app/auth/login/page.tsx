@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
@@ -19,6 +19,45 @@ export default function LoginPage() {
     identifier: '', // Changed from phone to identifier
     password: ''
   })
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token')
+      if (token) {
+        // Verify token is valid
+        try {
+          const response = await fetch('/api/user/profile', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
+          
+          if (response.ok) {
+            const data = await response.json()
+            if (data.success) {
+              // User is already logged in, redirect to dashboard
+              if (data.user.role === 'admin' || data.user.role === 'super_admin') {
+                router.push('/admin')
+              } else {
+                router.push('/dashboard')
+              }
+            }
+          } else {
+            // Token is invalid, clear it
+            localStorage.removeItem('token')
+            localStorage.removeItem('user')
+          }
+        } catch (error) {
+          console.error('Auth check failed:', error)
+          localStorage.removeItem('token')
+          localStorage.removeItem('user')
+        }
+      }
+    }
+    
+    checkAuth()
+  }, [router])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -60,8 +99,13 @@ export default function LoginPage() {
 
       if (data.success) {
         toast.success('Login successful!')
+        
+        // Store token and user data
         localStorage.setItem('token', data.token)
         localStorage.setItem('user', JSON.stringify(data.user))
+        
+        // Small delay to ensure localStorage is written
+        await new Promise(resolve => setTimeout(resolve, 100))
         
         // Redirect based on user role
         if (data.user.role === 'admin' || data.user.role === 'super_admin') {

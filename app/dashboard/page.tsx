@@ -78,9 +78,18 @@ export default function DashboardPage() {
     // Initialize background services
     initializeBackgroundServices()
     
-    fetchUserData()
-    fetchTransactions()
-    fetchDeviceStatus()
+    // Fetch initial data
+    const initializeData = async () => {
+      try {
+        await fetchUserData()
+        await fetchTransactions()
+        await fetchDeviceStatus()
+      } catch (error) {
+        console.error('Failed to initialize data:', error)
+      }
+    }
+    
+    initializeData()
 
     // Set up periodic device status check (every 15 seconds for more responsive updates)
     const deviceStatusInterval = setInterval(fetchDeviceStatus, 15000)
@@ -96,7 +105,7 @@ export default function DashboardPage() {
       clearInterval(transactionInterval)
       clearInterval(userDataInterval)
     }
-  }, [])
+  }, [router])
 
   const initializeBackgroundServices = async () => {
     try {
@@ -165,14 +174,32 @@ export default function DashboardPage() {
   const fetchUserData = async () => {
     try {
       const token = localStorage.getItem('token')
+      if (!token) {
+        router.push('/auth/login')
+        return
+      }
+      
       const response = await fetch('/api/user/profile', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
+      
       const data = await response.json()
+      
+      if (response.status === 401) {
+        // Token is invalid or expired
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        toast.error('Session expired. Please login again.')
+        router.push('/auth/login')
+        return
+      }
+      
       if (data.success) {
         setUser(data.user)
+      } else {
+        console.error('Failed to fetch user data:', data.message)
       }
     } catch (error) {
       console.error('Error fetching user data:', error)
@@ -182,11 +209,19 @@ export default function DashboardPage() {
   const fetchTransactions = async () => {
     try {
       const token = localStorage.getItem('token')
+      if (!token) return
+      
       const response = await fetch('/api/transactions', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
+      
+      if (response.status === 401) {
+        // Token is invalid, will be handled by fetchUserData
+        return
+      }
+      
       const data = await response.json()
       if (data.success) {
         setTransactions(data.transactions)
