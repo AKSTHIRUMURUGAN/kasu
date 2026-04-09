@@ -67,6 +67,19 @@ export default function DashboardPage() {
   const [sendAmount, setSendAmount] = useState('')
   const [recipientPhone, setRecipientPhone] = useState('')
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false)
+
+  // Load Razorpay script
+  useEffect(() => {
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.async = true
+    document.body.appendChild(script)
+    
+    return () => {
+      document.body.removeChild(script)
+    }
+  }, [])
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -241,9 +254,18 @@ export default function DashboardPage() {
       return
     }
 
+    if (amount < 1) {
+      toast.error('Minimum amount is ₹1')
+      return
+    }
+
+    setIsProcessingPayment(true)
+
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/transaction/add', {
+      
+      // Create Razorpay order
+      const orderResponse = await fetch('/api/payment/create-order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -252,18 +274,79 @@ export default function DashboardPage() {
         body: JSON.stringify({ amount })
       })
 
-      const data = await response.json()
-      if (data.success) {
-        toast.success('Money added successfully!')
-        setShowAddMoney(false)
-        setAddAmount('')
-        fetchUserData()
-        fetchTransactions()
-      } else {
-        toast.error(data.message || 'Failed to add money')
+      const orderData = await orderResponse.json()
+      
+      if (!orderData.success) {
+        toast.error(orderData.message || 'Failed to create order')
+        setIsProcessingPayment(false)
+        return
       }
+
+      // Initialize Razorpay payment
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'KASU',
+        description: 'Add money to wallet',
+        order_id: orderData.orderId,
+        handler: async function (response: any) {
+          try {
+            // Verify payment
+            const verifyResponse = await fetch('/api/payment/verify', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                amount: amount
+              })
+            })
+
+            const verifyData = await verifyResponse.json()
+
+            if (verifyData.success) {
+              toast.success('Money added successfully!')
+              setShowAddMoney(false)
+              setAddAmount('')
+              fetchUserData()
+              fetchTransactions()
+            } else {
+              toast.error(verifyData.message || 'Payment verification failed')
+            }
+          } catch (error) {
+            toast.error('Payment verification failed')
+          } finally {
+            setIsProcessingPayment(false)
+          }
+        },
+        prefill: {
+          name: user?.name || '',
+          email: user?.email || '',
+          contact: user?.phone || ''
+        },
+        theme: {
+          color: '#2563eb'
+        },
+        modal: {
+          ondismiss: function() {
+            setIsProcessingPayment(false)
+            toast.error('Payment cancelled')
+          }
+        }
+      }
+
+      const razorpay = new (window as any).Razorpay(options)
+      razorpay.open()
+
     } catch (error) {
+      console.error('Payment error:', error)
       toast.error('Something went wrong')
+      setIsProcessingPayment(false)
     }
   }
 
@@ -679,23 +762,42 @@ export default function DashboardPage() {
                     value={addAmount}
                     onChange={(e) => setAddAmount(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                    placeholder="Enter amount"
+                    placeholder="Enter amount (min ₹1)"
                     min="1"
                     step="0.01"
                     required
+                    disabled={isProcessingPayment}
                   />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Secure payment via Razorpay
+                  </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <button
                     type="submit"
-                    className="flex-1 btn-primary"
+                    disabled={isProcessingPayment}
+                    className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                   >
-                    Add Money
+                    {isProcessingPayment ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </>
+                    ) : (
+                      'Proceed to Pay'
+                    )}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowAddMoney(false)}
-                    className="flex-1 btn-secondary"
+                    onClick={() => {
+                      setShowAddMoney(false)
+                      setAddAmount('')
+                    }}
+                    disabled={isProcessingPayment}
+                    className="flex-1 btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>
